@@ -13,7 +13,17 @@ PHP + MySQL on Apache, served through XAMPP. No framework.
 5. Import `database/seed.sql`.
 6. Open `http://localhost/sk-capstone/`.
 
-Default local credentials assume MySQL user `root` with an empty password, the XAMPP default. Change them in `config/database.php` if yours differ.
+Default local credentials assume MySQL user `root` with an empty password, the XAMPP default. If yours differ, create `config/local.php` (git-ignored) and override them there, for example `define('DB_PASS', 'secret');`. See the example at the bottom of `config/config.php`.
+
+Sign in with a username, an email address, or a KK ID (for example `KK-2026-00001` for Maria Santos).
+
+### Testing the QR code on a phone
+
+The QR code encodes the address the official's browser used. If the official opens the system as `http://localhost/...`, a phone cannot reach that address. Open it with the laptop's LAN address instead, for example `http://192.168.1.10/sk-capstone/`, with the phone on the same Wi-Fi. Phones only allow the in-page camera scanner on HTTPS or localhost. Over plain HTTP, members scan the poster with their phone's own camera app, which opens the link directly.
+
+### Offline use
+
+The QR generator and the camera scanner are stored in `assets/js/vendor/`, so attendance works without internet. Google Fonts falls back to system fonts when offline.
 
 ## Test accounts
 
@@ -44,4 +54,17 @@ These are development credentials committed to the repository on purpose, so the
 
 ## Status
 
-Database complete and validated. Application code not yet started. See `docs/build-plan.md`.
+Stages 1 to 8 of `docs/build-plan.md` are built: all four roles, from the Figma Make prototype, in plain PHP with PDO, MySQL, HTML, CSS and JavaScript. Stage 9 (hardening before defense) is partly done; see the checklist there.
+
+## Code layout
+
+| Path | Contents |
+|---|---|
+| `index.php`, `register.php`, `logout.php` | Sign in (username, email or KK ID), KK registration with ID and selfie, sign out |
+| `account.php`, `notifications.php`, `file.php` | Profile and password, notifications for every role, access-checked document download |
+| `admin/` `federation/` `barangay/` `member/` | Role pages. Each calls `require_role()` before any output |
+| `includes/pages/` | Pages shared by the federation and barangay roles: youth, programs, calendar, participation, documents, member content, reports, budget report. Each role has its own thin wrapper that does the role check |
+| `includes/auth.php` | Login, session, `require_role()`, `require_barangay_access()` |
+| `includes/domain.php` | Business rules: uploads, stock status, utilisation, evaluation forms, summaries |
+| `includes/helpers.php` | Escaping, money, CSRF, flash messages, audit log, notifications, CSV export |
+| `assets/` | `css/style.css` (design tokens), `js/app.js`, `js/vendor/` (QR libraries), logo |

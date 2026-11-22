@@ -61,14 +61,16 @@ Get this right or the whole attendance chain is wrong:
 ```
 /                      login (index.php), logout, register
 config/                db connection, app config
-includes/              auth, RBAC guard, helpers, header/sidebar/footer partials
-assets/css, assets/js  design system and client scripts
+includes/              auth, RBAC guard, helpers, domain rules, header/sidebar/footer partials
+includes/pages/        pages shared by federation + barangay; role dirs hold thin wrappers
+assets/css, assets/js  design system and client scripts; assets/js/vendor = QR libraries (offline)
 admin/                 Administrator pages
 federation/            SK Federation pages
 barangay/              SK Barangay Official pages
 member/                KK Member pages
 uploads/documents/     repository files
 uploads/proposals/     budget proposal attachments
+uploads/verification/  KK registration ID + selfie photos (deleted once the chairman acts)
 database/              schema.sql, seed.sql
 docs/                  specification extracted from the manuscript
 ```
@@ -85,6 +87,15 @@ Keep role pages in their own directory. Every page in a role directory must call
 - Peso amounts are `DECIMAL(12,2)`. Never use floats for money.
 - Follow the existing design tokens in `docs/design-system.md`. The prototype screens were approved; do not restyle them.
 
+## Implementation notes
+
+- **Inventory quantities.** `quantity_on_hand` is the barangay's total holding; `quantity_released` is what is out on loan; available = on hand − released. Approval raises `quantity_released`, a return lowers it. The seed data was written this way.
+- **KK ID** (`KK-2026-00001`) is derived from `youth_profiles.profile_id` and the year encoded. It is not stored. Members can sign in with it.
+- **SK Chairman** is `barangays.chairman_id`, set by the Administrator. Only that user can approve or reject the barangay's registrations.
+- **Money** is never added in PHP. Sums and comparisons run in SQL on DECIMAL columns (`CAST(? AS DECIMAL(12,2))`). `money_input()` validates form input as a string.
+- **QR token** is random hex. `member/scan.php` also accepts the seed's older `ACT1-…` style tokens.
+- **Evaluation scale** for activity evaluations is 1–5, matching the schema check and the prototype. The 4-point scale in Chapter 2 is for the system's own ISO 25010/TAM evaluation, not for activity forms.
+
 ## Status
 
-Database schema and seed data are complete and validated. Application code has not been started. `docs/build-plan.md` has the intended order.
+Stages 1–8 of `docs/build-plan.md` are built and tested against the seed data. Stage 9 hardening is partly done (see the checklist there).

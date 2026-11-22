@@ -1,5 +1,10 @@
 uploads/*
 !uploads/.gitkeep
+# uploads/.htaccess blocks direct web access to uploaded files; it must be committed.
+!uploads/.htaccess
+!uploads/verification/
+uploads/verification/*
+!uploads/verification/.gitkeep
 !uploads/documents/
 uploads/documents/*
 !uploads/documents/.gitkeep

@@ -1,5 +1,11 @@
 uploads/*
 !uploads/.gitkeep
+!uploads/documents/
+uploads/documents/*
+!uploads/documents/.gitkeep
+!uploads/proposals/
+uploads/proposals/*
+!uploads/proposals/.gitkeep
 config/local.php
 *.log
 .DS_Store

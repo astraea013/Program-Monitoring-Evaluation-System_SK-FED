@@ -5,6 +5,7 @@ Order matters: each stage depends on the one before it. Finish and test a stage 
 ## Done
 
 - **Database.** `schema.sql` and `seed.sql`, validated. See `docs/database.md`.
+- **Stages 1–8.** Built from the Figma Make prototype and tested against the seed accounts. The Stage 1 test passes: each seed account lands on its own dashboard, `juan.cruz` is refused while pending, and another role's URL returns 403.
 
 ## Stage 1 — Foundation
 
@@ -43,7 +44,9 @@ Also: manual attendance encoding for walk-ins, the member's own attendance histo
 
 ## Stage 6 — Inventory and equipment requests
 
-Item CRUD for the barangay. KK request form against available quantity. Barangay approve/decline. Approval must, in one transaction, insert the transaction row, increase `quantity_released`, decrease `quantity_on_hand`, and recompute `stock_status` against `reorder_level`. Returns reverse it.
+Item CRUD for the barangay. KK request form against available quantity. Barangay approve/decline. Approval must, in one transaction, insert the transaction row, increase `quantity_released`, and recompute `stock_status` against `reorder_level`. Returns reverse it.
+
+`quantity_on_hand` is the total the barangay holds and does **not** change on issue. Available = `quantity_on_hand − quantity_released`. An earlier version of this line also decreased `quantity_on_hand`, which counts each issue twice and contradicts the seed data.
 
 ## Stage 7 — Budget
 
@@ -57,13 +60,14 @@ Announcements, document repository, feedback with the anonymous option, notifica
 
 ## Stage 9 — Hardening before defense
 
-- Confirm every page calls the RBAC guard.
-- Attempt cross-barangay access by URL editing and confirm it fails.
-- Confirm no plaintext passwords anywhere, including logs.
-- Confirm uploads reject non-permitted types and cannot execute.
-- Replace all seed passwords.
-- Replace the barangay list with the official one.
-- Check the system against `docs/features.md` line by line, and against the manuscript's scope.
+- [x] Confirm every page calls the RBAC guard. (Every file in `admin/`, `federation/`, `barangay/`, `member/` calls `require_role()`.)
+- [x] Attempt cross-barangay access by URL editing and confirm it fails. (Tested: profile edit, inventory approval, expense recording, verification photos.)
+- [x] Confirm no plaintext passwords anywhere, including logs.
+- [x] Confirm uploads reject non-permitted types and cannot execute. (Extension + MIME check, random names, `uploads/.htaccess` denies all direct access.)
+- [ ] Replace all seed passwords.
+- [~] Replace the barangay list with the official one. (Now the 19 barangays from the prototype; confirm spellings against the municipal list.)
+- [ ] Check the system against `docs/features.md` line by line, and against the manuscript's scope.
+- [ ] Test on XAMPP on Windows, and scan a printed QR code with a real phone over the LAN.
 
 ## Evaluation instrument
 

@@ -2,7 +2,22 @@
 
 `database/schema.sql` then `database/seed.sql`, imported in that order through phpMyAdmin or the `mysql` client. Schema drops and recreates `sk_monitoring`, so never run it against a database holding real data.
 
-26 tables, 50 foreign keys, 17 check constraints. Validated: every foreign key points at a column that exists, and every seed row matches its column count.
+27 tables (the 26 of the ERD plus `settings`). Validated: every foreign key points at a column that exists, every seed row matches its column count, and every stored derived value agrees with its source rows.
+
+## Added while building from the prototype
+
+These columns and the `settings` table are not in Figure 13 and must be added to the ERD.
+
+| Table | Column(s) | Why |
+|---|---|---|
+| `barangays` | `chairman_id` → `users` | The Administrator designates one SK Chairman per barangay; only that user verifies KK registrations |
+| `users` | `rejection_reason` | Shown to the applicant when a registration is rejected |
+| `youth_profiles` | `youth_org`, `school_status`, `is_pwd`, `attended_assembly` | Youth Profile section of the registration form and masterlist |
+| `youth_profiles` | `id_document_type`, `id_document_path`, `selfie_path`, `consent_date` | Identity verification at registration. Both paths are set to NULL and the files deleted once the chairman acts |
+| `evaluation_questions` | `section` | Groups questions into Program Quality, Implementer Quality, Perceived Benefits and Suggestions |
+| `equipment_requests` | `date_needed` | "Needed by" date on the request form |
+| `documents` | `is_public` | Published to the KK member portal |
+| `settings` | key/value | System name, municipality, audit retention, maintenance mode, eligibility minimum |
 
 ## Constraints that encode business rules
 
@@ -44,6 +59,10 @@ Several rules from the manuscript are enforced in the schema rather than only in
 
 **Derived values are stored, not computed on the fly**: `inventory_items.quantity_released`, `inventory_items.stock_status`, `program_budgets.utilised_amount`, `budget_allocations.remaining_amount`. Every write path that affects one must update it in the same transaction, or the screens will disagree with each other.
 
+**Inventory:** `quantity_on_hand` is the total held, `quantity_released` is what is out on loan, and available is the difference. Issuing raises `quantity_released` only.
+
+**KK ID** is not stored. It is `KK-<year encoded>-<profile_id padded to 5>`, e.g. `KK-2026-00001`.
+
 **`notifications` is not in the manuscript's ERD (Figure 13).** It is needed by the scope, the use case diagram and every prototype screen. Figure 13 must be updated to match before final submission.
 
 ## Test accounts
@@ -59,6 +78,9 @@ Several rules from the manuscript are enforced in the schema rather than only in
 
 `juan.cruz` exists so the verification flow can be demonstrated. Change all of these before the defense.
 
-## Known seed gap
+## Seed notes
 
-Only six barangays are seeded, taken from the prototype screens. Replace with the complete official list of Nasipit barangays before the demo.
+- 19 barangays, from the prototype's Barangays & Settings screen. Confirm spellings against the official municipal list.
+- `brgy1.chair` and `camagong.chair` are the designated chairmen of their barangays.
+- Maria Santos has attended two activities and holds one e-certificate, so the member screens have data.
+- The budget amounts were adjusted so they reconcile. The prototype figures (Figures 25 and 37) did not: their program lines exceeded the approved amount, and the remaining allocation did not equal total minus approved.

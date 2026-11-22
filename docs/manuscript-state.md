@@ -38,7 +38,13 @@ The manuscript passed proposal defense. Several revisions have been applied sinc
 
 **Barangay list.** Only six barangays are seeded, taken from the prototype. The official Nasipit list is needed.
 
-**No KK screens exist for announcements, notifications or feedback**, though all three are in the scope and the use case diagram.
+**No KK screens exist for announcements, notifications or feedback**, though all three are in the scope and the use case diagram. *(The built system has all three; the prototype figures still lack them.)*
+
+**Identity verification at registration is not in the manuscript.** The prototype, and so the built system, asks for an ID photo and a selfie, which only the barangay chairman can view (each view is audited) and which are deleted once the chairman acts. Either describe this in Scope, Data Privacy and Definition of Terms, or remove it from the system. A panelist may ask how photos of minors are protected.
+
+**Figure 13 (ERD) needs the columns added during the build.** See "Added while building from the prototype" in `docs/database.md` (chairman designation, youth profile fields, settings table and others).
+
+**Activity evaluation uses a 1–5 scale; Chapter 2's instrument is 4-point.** These are different instruments (activity feedback vs. the ISO 25010/TAM system evaluation), but the manuscript should say so explicitly.
 
 ## Key references for the budget argument
 

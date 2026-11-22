@@ -34,8 +34,11 @@ CREATE TABLE barangays (
   barangay_id    INT(11)      NOT NULL AUTO_INCREMENT,
   barangay_name  VARCHAR(100) NOT NULL,
   municipality   VARCHAR(100) NOT NULL DEFAULT 'Nasipit',
+  chairman_id    INT(11)      DEFAULT NULL,   -- SK Chairman designated by the Administrator; verifies KK registrations
   PRIMARY KEY (barangay_id),
-  UNIQUE KEY uq_barangay (barangay_name, municipality)
+  UNIQUE KEY uq_barangay (barangay_name, municipality),
+  KEY fk_barangay_chairman (chairman_id),
+  CONSTRAINT fk_barangay_chairman FOREIGN KEY (chairman_id) REFERENCES users (user_id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ---------------------------------------------------------------------
@@ -53,6 +56,7 @@ CREATE TABLE users (
   password_hash        VARCHAR(255) NOT NULL,
   verification_status  VARCHAR(20)  NOT NULL DEFAULT 'pending',
   date_verified        DATETIME     DEFAULT NULL,
+  rejection_reason     VARCHAR(255) DEFAULT NULL,
   is_active            TINYINT(1)   NOT NULL DEFAULT 1,
   last_login           DATETIME     DEFAULT NULL,
   date_created         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -83,6 +87,16 @@ CREATE TABLE youth_profiles (
   civil_status  VARCHAR(30)  DEFAULT NULL,
   education     VARCHAR(100) DEFAULT NULL,
   work_status   VARCHAR(100) DEFAULT NULL,
+  youth_org     VARCHAR(255) DEFAULT NULL,
+  school_status VARCHAR(30)  DEFAULT NULL,
+  is_pwd        TINYINT(1)   DEFAULT NULL,
+  attended_assembly TINYINT(1) DEFAULT NULL,
+  -- Identity verification uploads. Stored outside public access and
+  -- deleted (paths set to NULL) once the chairman acts on the registration.
+  id_document_type VARCHAR(50)  DEFAULT NULL,
+  id_document_path VARCHAR(255) DEFAULT NULL,
+  selfie_path      VARCHAR(255) DEFAULT NULL,
+  consent_date     DATETIME     DEFAULT NULL,
   date_encoded  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (profile_id),
   UNIQUE KEY uq_profile_user (user_id),
@@ -171,6 +185,7 @@ CREATE TABLE evaluation_questions (
   form_id       INT(11)     NOT NULL,
   question_text TEXT        NOT NULL,
   question_type VARCHAR(20) NOT NULL DEFAULT 'rating',
+  section       VARCHAR(100) NOT NULL DEFAULT 'General',
   sort_order    INT(11)     NOT NULL DEFAULT 1,
   PRIMARY KEY (question_id),
   KEY fk_question_form (form_id),
@@ -242,6 +257,7 @@ CREATE TABLE documents (
   category      VARCHAR(50)  NOT NULL DEFAULT 'other',
   file_path     VARCHAR(255) NOT NULL,
   file_size     INT(11)      NOT NULL DEFAULT 0,
+  is_public     TINYINT(1)   NOT NULL DEFAULT 0,   -- 1 = published to the KK member portal
   date_uploaded DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (document_id),
   KEY fk_doc_program (program_id),
@@ -296,6 +312,7 @@ CREATE TABLE equipment_requests (
   activity_id    INT(11)      DEFAULT NULL,
   quantity       INT(11)      NOT NULL,
   purpose        VARCHAR(255) DEFAULT NULL,
+  date_needed    DATE         DEFAULT NULL,
   req_status     VARCHAR(50)  NOT NULL DEFAULT 'pending',
   remarks        VARCHAR(255) DEFAULT NULL,
   date_requested DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -517,6 +534,15 @@ CREATE TABLE audit_logs (
   PRIMARY KEY (log_id),
   KEY fk_log_user (user_id),
   CONSTRAINT fk_log_user FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ---------------------------------------------------------------------
+-- 27. settings      (system-wide configuration, managed by the Administrator)
+-- ---------------------------------------------------------------------
+CREATE TABLE settings (
+  setting_key   VARCHAR(50)  NOT NULL,
+  setting_value VARCHAR(255) NOT NULL,
+  PRIMARY KEY (setting_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SK Federation Prototype — Budget and Evaluation Screens</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --indigo:#10214B; --blue:#1B5AC4; --sun:#F5B60D; --white:#F7F8FB;
+  --gray:#5A6478; --red:#C8322B; --green:#1E7D4F;
+  --line:#E3E7EF; --card:#FFFFFF;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Archivo,Inter,system-ui,sans-serif;background:#55606f;color:var(--indigo)}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+
+/* screen switcher — hide before screenshotting */
+#switch{position:sticky;top:0;z-index:50;background:#1b2434;padding:10px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#switch b{color:#fff;font-size:12px;margin-right:6px;font-weight:600}
+#switch button{font-family:inherit;font-size:12px;font-weight:600;border:1px solid #3a475c;background:#27324a;color:#cfd8e6;padding:6px 11px;border-radius:6px;cursor:pointer}
+#switch button.on{background:var(--sun);color:#1b2434;border-color:var(--sun)}
+#switch .hint{color:#8a97ab;font-size:11px;margin-left:auto}
+
+.screen{display:none;width:1200px;max-width:100%;margin:18px auto;background:var(--white);
+  border-radius:4px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.screen.on{display:flex}
+.side{width:200px;flex:0 0 200px;background:var(--indigo);padding-bottom:20px}
+.brand{display:flex;gap:9px;align-items:center;padding:16px 14px 18px}
+.brand .sun{width:26px;height:26px;flex:0 0 26px}
+.brand h1{color:#fff;font-size:13px;font-weight:700;line-height:1.15}
+.brand p{color:#9fb0d0;font-size:9px;margin-top:2px}
+.nav a{display:flex;gap:9px;align-items:center;padding:9px 14px;color:#cdd8ec;font-size:12.5px;text-decoration:none}
+.nav a .ic{width:14px;text-align:center;font-size:11px;opacity:.85}
+.nav a.on{background:#19305f;color:var(--sun);font-weight:600;border-left:3px solid var(--sun);padding-left:11px}
+.nav a .dot{width:6px;height:6px;border-radius:50%;background:var(--sun);margin-left:auto}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{display:flex;justify-content:space-between;align-items:center;padding:10px 24px;background:#fff;border-bottom:1px solid var(--line)}
+.crumb{font-size:10.5px;letter-spacing:.14em;color:var(--gray)}
+.out{font-size:12px;color:var(--indigo);text-decoration:none}
+.body{padding:20px 24px 26px}
+
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:14px}
+.head h2{font-size:23px;font-weight:700;letter-spacing:-.01em}
+.head .sub{font-size:11.5px;color:var(--gray);margin-top:4px}
+.pill{font-size:9.5px;letter-spacing:.1em;padding:5px 10px;border-radius:999px;white-space:nowrap}
+.pill.amber{background:#FDF3D6;color:#8A6A05}
+.pill.blue{background:#E4EDFC;color:#164AA3}
+.pill.green{background:#DFF2E8;color:#14613C}
+.pill.red{background:#FBE4E3;color:#9B2621}
+.pill.gray{background:#ECEFF5;color:#4A5468}
+
+.note{display:flex;gap:9px;background:#EAF1FD;border-radius:5px;padding:11px 14px;font-size:12px;margin-bottom:16px;color:#1c3566}
+.note .b{width:6px;height:6px;border-radius:50%;background:var(--blue);margin-top:5px;flex:0 0 6px}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:13px 15px}
+.stat .l{font-size:11px;color:var(--gray)}
+.stat .v{font-size:24px;font-weight:700;margin-top:5px}
+.stat .v.sm{font-size:19px}
+
+.tabs{display:flex;gap:22px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tabs span{font-size:12.5px;color:var(--gray);padding-bottom:9px;cursor:default}
+.tabs span.on{color:var(--blue);font-weight:600;border-bottom:2px solid var(--blue)}
+
+.row{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--sun);border-radius:5px;padding:13px 16px;margin-bottom:11px;display:flex;justify-content:space-between;gap:16px}
+.row.b{border-left-color:var(--blue)} .row.g{border-left-color:var(--green)} .row.r{border-left-color:var(--red)}
+.row .id{font-size:10.5px;color:var(--blue)}
+.row h3{font-size:14.5px;font-weight:700;margin:5px 0 4px}
+.row .m{font-size:11.5px;color:var(--gray);line-height:1.6}
+.row .rt{text-align:right;flex:0 0 auto}
+.row .date{font-size:10.5px;color:var(--gray);margin-bottom:8px}
+.btn{background:var(--blue);color:#fff;border:0;font-family:inherit;font-size:12px;font-weight:600;padding:8px 15px;border-radius:5px;cursor:pointer}
+.btn.ghost{background:#fff;color:var(--blue);border:1px solid #BFD2F2}
+.btn.red{background:#fff;color:var(--red);border:1px solid #EFC3C1}
+
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+th{font-size:9.5px;letter-spacing:.09em;color:var(--gray);text-align:left;padding:10px 13px;background:#FAFBFD;border-bottom:1px solid var(--line);font-weight:600}
+td{padding:11px 13px;font-size:12.5px;border-bottom:1px solid #F0F3F8;vertical-align:top}
+tr:last-child td{border-bottom:0}
+td .t{font-weight:600} td .s{font-size:11px;color:var(--gray);margin-top:3px}
+td.num{text-align:right;font-family:"IBM Plex Mono",monospace;font-size:12px}
+
+.bar{height:6px;background:#E8ECF3;border-radius:999px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--blue)}
+.bar i.amber{background:var(--sun)} .bar i.green{background:var(--green)}
+
+.split{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:15px 16px}
+.panel h4{font-size:14px;font-weight:700;margin-bottom:3px}
+.panel .pid{font-size:10.5px;color:var(--gray);margin-bottom:12px}
+.kv{display:flex;justify-content:space-between;font-size:12px;padding:6px 0}
+.kv b{font-family:"IBM Plex Mono",monospace;font-weight:500}
+.sep{height:1px;background:var(--line);margin:11px 0}
+.lab{font-size:9.5px;letter-spacing:.1em;color:var(--gray);margin-bottom:7px}
+.noteBox{background:#FAFBFD;border:1px solid var(--line);border-radius:5px;padding:10px 11px;font-size:11.5px;color:#36405a;line-height:1.55}
+.file{display:flex;gap:8px;align-items:center;font-size:11.5px;padding:7px 10px;border:1px solid var(--line);border-radius:5px;margin-bottom:7px;background:#FAFBFD}
+.file .x{margin-left:auto;font-size:10px;color:var(--gray)}
+.full{width:100%;margin-top:12px;text-align:center}
+.q{font-size:12.5px;font-weight:600;margin-bottom:7px}
+.stars{color:var(--sun);font-size:13px;letter-spacing:2px}
+.caption{width:1200px;max-width:100%;margin:0 auto 26px;color:#dfe5ee;font-size:12px;font-style:italic;text-align:center}
+@media (max-width:980px){.stats{grid-template-columns:repeat(2,1fr)}.split{grid-template-columns:1fr}.screen{display:block}.screen:not(.on){display:none}.side{width:100%;flex:none}}
+</style>
+</head>
+<body>
+
+<div id="switch">
+  <b>Screen</b>
+  <button class="on" data-s="s1">SK Barangay — Budget</button>
+  <button data-s="s2">SK Federation — Budget</button>
+  <button data-s="s3">SK Barangay — Programs (status)</button>
+  <button data-s="s4">KK Member — My Evaluations</button>
+  <button data-s="s5">SK Barangay — Budget Report</button>
+  <span class="hint">Press H to hide this bar before screenshotting</span>
+</div>
+
+<!-- ============ SCREEN 1 : SK BARANGAY OFFICIAL — BUDGET ============ -->
+<section class="screen on" id="s1">
+  <aside class="side">
+    <div class="brand">
+      <svg class="sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.4" fill="#F5B60D"/><g stroke="#F5B60D" stroke-width="1.7" stroke-linecap="round"><path d="M12 2.2v2.4M12 19.4v2.4M2.2 12h2.4M19.4 12h2.4M5.1 5.1l1.7 1.7M17.2 17.2l1.7 1.7M18.9 5.1l-1.7 1.7M6.8 17.2l-1.7 1.7"/></g></svg>
+      <div><h1>SK Federation</h1><p>Monitoring &amp; Evaluation System</p></div>
+    </div>
+    <nav class="nav">
+      <a href="#"><span class="ic">▣</span>Dashboard</a>
+      <a href="#"><span class="ic">◎</span>Youth Profiling</a>
+      <a href="#"><span class="ic">◈</span>Programs</a>
+      <a href="#"><span class="ic">▤</span>Calendar</a>
+      <a href="#"><span class="ic">▢</span>QR Attendance</a>
+      <a href="#"><span class="ic">◉</span>Participation</a>
+      <a href="#"><span class="ic">▤</span>Documents</a>
+      <a href="#"><span class="ic">◇</span>KK Member Content</a>
+      <a href="#"><span class="ic">▦</span>Inventory</a>
+      <a class="on" href="#"><span class="ic">₱</span>Budget</a>
+      <a href="#"><span class="ic">◯</span>Notifications<span class="dot"></span></a>
+      <a href="#"><span class="ic">▥</span>Reports</a>
+      <a href="#"><span class="ic">✓</span>Verify Members</a>
+    </nav>
+  </aside>
+  <div class="main">
+    <div class="top"><span class="crumb mono">BUDGET</span><a class="out" href="#">Sign out</a></div>
+    <div class="body">
+      <div class="head">
+        <div>
+          <h2>Budget</h2>
+          <div class="sub mono">Barangay 1 (Apagan) · CY 2026 · Proposal and utilisation</div>
+        </div>
+        <span class="pill amber mono">1 PROPOSAL PENDING</span>
+      </div>
+
+      <div class="note"><span class="b"></span><span>Budget records are visible to this barangay's SK officials and to the SK Federation only. Katipunan ng Kabataan members have no access to them.</span></div>
+
+      <div class="stats">
+        <div class="stat"><div class="l">Proposed</div><div class="v">₱250,000</div></div>
+        <div class="stat"><div class="l">Approved by Federation</div><div class="v">₱235,000</div></div>
+        <div class="stat"><div class="l">Utilised</div><div class="v">₱181,500</div></div>
+        <div class="stat"><div class="l">Balance</div><div class="v">₱53,500</div></div>
+      </div>
+
+      <div class="tabs"><span class="on">Proposals</span><span>Programme Budgets</span><span>Expenses</span></div>
+
+      <div class="row b">
+        <div>
+          <div class="id mono">BPR-2026-002 <span class="pill amber mono" style="margin-left:6px">PENDING</span></div>
+          <h3>Supplemental Budget Proposal — 2nd Semester 2026</h3>
+          <div class="m">Proposed ₱95,000 · Covers 3 programs · Submitted to SK Federation<br>
+          Attachments: Proposal letter, Itemised breakdown, Council resolution</div>
+        </div>
+        <div class="rt"><div class="date mono">Submitted Oct 21, 2026</div><button class="btn ghost">View submission</button></div>
+      </div>
+
+      <div class="row g">
+        <div>
+          <div class="id mono">BPR-2026-001 <span class="pill green mono" style="margin-left:6px">APPROVED</span></div>
+          <h3>Annual Budget Proposal — CY 2026</h3>
+          <div class="m">Proposed ₱155,000 · Approved ₱140,000 · Deducted from federation allocation<br>
+          Remarks: Approved with reduction on representation expense.</div>
+        </div>
+        <div class="rt"><div class="date mono">Approved Jan 18, 2026</div><button class="btn ghost">View submission</button></div>
+      </div>
+
+      <div class="row r">
+        <div>
+          <div class="id mono">BPR-2025-004 <span class="pill red mono" style="margin-left:6px">RETURNED</span></div>
+          <h3>Supplemental Budget Proposal — Sports Fest</h3>
+          <div class="m">Proposed ₱60,000 · Returned for revision<br>
+          Remarks: Attach the itemised breakdown and the council resolution.</div>
+        </div>
+        <div class="rt"><div class="date mono">Returned Nov 12, 2025</div><button class="btn">Revise and resubmit</button></div>
+      </div>
+
+      <div class="split" style="margin-top:20px">
+        <div>
+          <div class="lab mono">PROGRAMME BUDGETS — COMPLETION STATUS</div>
+          <table>
+            <tr><th>PROGRAM</th><th>ALLOCATED</th><th>UTILISED</th><th>BALANCE</th><th>STATUS</th></tr>
+            <tr>
+              <td><div class="t">Health &amp; Wellness Campaign</div><div class="s mono">PRG-001</div></td>
+              <td class="num">45,000</td><td class="num">38,200</td><td class="num">6,800</td>
+              <td><span class="pill amber mono">INCOMPLETE</span><div class="s">Balance for medical supplies not yet delivered.</div></td>
+            </tr>
+            <tr>
+              <td><div class="t">Digital Literacy Workshop</div><div class="s mono">PRG-002</div></td>
+              <td class="num">30,000</td><td class="num">30,000</td><td class="num">0</td>
+              <td><span class="pill green mono">COMPLETE</span><div class="s">Fully utilised and liquidated.</div></td>
+            </tr>
+            <tr>
+              <td><div class="t">Livelihood Training — Ube Processing</div><div class="s mono">PRG-003</div></td>
+              <td class="num">60,000</td><td class="num">55,300</td><td class="num">4,700</td>
+              <td><span class="pill amber mono">INCOMPLETE</span><div class="s">Awaiting receipt from supplier.</div></td>
+            </tr>
+            <tr>
+              <td><div class="t">Environmental Clean-up Drive</div><div class="s mono">PRG-004</div></td>
+              <td class="num">15,000</td><td class="num">15,000</td><td class="num">0</td>
+              <td><span class="pill green mono">COMPLETE</span><div class="s">No remaining balance.</div></td>
+            </tr>
+            <tr>
+              <td><div class="t">Sports Fest 2026</div><div class="s mono">PRG-005</div></td>
+              <td class="num">90,000</td><td class="num">43,000</td><td class="num">47,000</td>
+              <td><span class="pill gray mono">ONGOING</span><div class="s">Activity still in progress.</div></td>
+            </tr>
+          </table>
+        </div>
+        <div class="panel">
+          <h4>Health &amp; Wellness Campaign</h4>
+          <div class="pid mono">PRG-001 · Barangay 1 (Apagan)</div>
+          <div class="kv"><span>Allocated</span><b>₱45,000</b></div>
+          <div class="kv"><span>Utilised</span><b>₱38,200</b></div>
+          <div class="kv"><span>Balance</span><b>₱6,800</b></div>
+          <div class="bar"><i class="amber" style="width:85%"></i></div>
+          <div class="s mono" style="font-size:10.5px;color:var(--gray);margin-top:6px">85% utilised</div>
+          <div class="sep"></div>
+          <div class="lab mono">COMPLETION STATUS</div>
+          <span class="pill amber mono">INCOMPLETE</span>
+          <div class="lab mono" style="margin-top:13px">NOTE ON REMAINING AMOUNT</div>
+          <div class="noteBox">₱6,800 is held for medical supplies ordered on Sep 30 but not yet delivered. To be utilised once the supplier releases the items.</div>
+          <div class="sep"></div>
+          <div class="lab mono">SUPPORTING DOCUMENTS</div>
+          <div class="file"><span>▤</span>Proposal letter.pdf<span class="x mono">214 KB</span></div>
+          <div class="file"><span>▤</span>Itemised breakdown.xlsx<span class="x mono">38 KB</span></div>
+          <button class="btn full">Record expense</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCREEN 2 : SK FEDERATION — BUDGET ============ -->
+<section class="screen" id="s2">
+  <aside class="side">
+    <div class="brand">
+      <svg class="sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.4" fill="#F5B60D"/><g stroke="#F5B60D" stroke-width="1.7" stroke-linecap="round"><path d="M12 2.2v2.4M12 19.4v2.4M2.2 12h2.4M19.4 12h2.4M5.1 5.1l1.7 1.7M17.2 17.2l1.7 1.7M18.9 5.1l-1.7 1.7M6.8 17.2l-1.7 1.7"/></g></svg>
+      <div><h1>SK Federation</h1><p>Monitoring &amp; Evaluation System</p></div>
+    </div>
+    <nav class="nav">
+      <a href="#"><span class="ic">▣</span>Dashboard</a>
+      <a href="#"><span class="ic">◎</span>Youth Profiling</a>
+      <a href="#"><span class="ic">◈</span>Programs</a>
+      <a href="#"><span class="ic">▤</span>Calendar</a>
+      <a href="#"><span class="ic">◉</span>Participation</a>
+      <a href="#"><span class="ic">▤</span>Documents</a>
+      <a href="#"><span class="ic">◇</span>KK Member Content</a>
+      <a class="on" href="#"><span class="ic">₱</span>Budget</a>
+      <a href="#"><span class="ic">◯</span>Notifications<span class="dot"></span></a>
+      <a href="#"><span class="ic">▥</span>Reports</a>
+    </nav>
+  </aside>
+  <div class="main">
+    <div class="top"><span class="crumb mono">BUDGET</span><a class="out" href="#">Sign out</a></div>
+    <div class="body">
+      <div class="head">
+        <div>
+          <h2>Budget Allocation &amp; Approval</h2>
+          <div class="sub mono">Pederasyon ng mga Sangguniang Kabataan · CY 2026</div>
+        </div>
+        <span class="pill amber mono">3 PROPOSALS FOR REVIEW</span>
+      </div>
+
+      <div class="note"><span class="b"></span><span>An approved proposal is deducted from the federation allocation. Approval records the amount against the allocation and does not itself release funds.</span></div>
+
+      <div class="stats">
+        <div class="stat"><div class="l">Allocation for the Period</div><div class="v">₱1,500,000</div></div>
+        <div class="stat"><div class="l">Approved to Barangays</div><div class="v">₱1,085,000</div></div>
+        <div class="stat"><div class="l">Remaining Allocation</div><div class="v">₱415,000</div></div>
+        <div class="stat"><div class="l">Barangays Reporting</div><div class="v">11 <span style="font-size:13px;color:var(--gray);font-weight:400">of 14</span></div></div>
+      </div>
+      <div class="bar" style="margin:-6px 0 18px"><i style="width:72%"></i></div>
+
+      <div class="tabs"><span class="on">Pending Proposals</span><span>Acted Upon</span><span>Allocation Setup</span><span>Utilisation by Barangay</span></div>
+
+      <div class="row">
+        <div>
+          <div class="id mono">BPR-2026-002 <span class="pill amber mono" style="margin-left:6px">PENDING</span></div>
+          <h3>Barangay 1 (Apagan) — Supplemental, 2nd Semester</h3>
+          <div class="m">Proposed ₱95,000 · Covers 3 programs · Submitted by M. Santos, SK Chairperson<br>
+          Attachments: Proposal letter.pdf · Itemised breakdown.xlsx · Council resolution.pdf</div>
+        </div>
+        <div class="rt"><div class="date mono">Submitted Oct 21, 2026</div>
+          <button class="btn">Approve</button>
+          <button class="btn red" style="margin-left:6px">Return</button></div>
+      </div>
+
+      <div class="row">
+        <div>
+          <div class="id mono">BPR-2026-009 <span class="pill amber mono" style="margin-left:6px">PENDING</span></div>
+          <h3>Camagong — Annual Budget Proposal</h3>
+          <div class="m">Proposed ₱148,000 · Covers 5 programs · Submitted by J. Deluta, SK Chairperson<br>
+          Attachments: Proposal letter.pdf · Itemised breakdown.xlsx</div>
+        </div>
+        <div class="rt"><div class="date mono">Submitted Oct 19, 2026</div>
+          <button class="btn">Approve</button>
+          <button class="btn red" style="margin-left:6px">Return</button></div>
+      </div>
+
+      <div class="row">
+        <div>
+          <div class="id mono">BPR-2026-011 <span class="pill amber mono" style="margin-left:6px">PENDING</span></div>
+          <h3>Talisay — Supplemental, Livelihood Training</h3>
+          <div class="m">Proposed ₱72,000 · Covers 1 program · Submitted by G. Fabre, SK Chairperson<br>
+          Attachments: Proposal letter.pdf</div>
+        </div>
+        <div class="rt"><div class="date mono">Submitted Oct 17, 2026</div>
+          <button class="btn">Approve</button>
+          <button class="btn red" style="margin-left:6px">Return</button></div>
+      </div>
+
+      <div class="split" style="margin-top:20px">
+        <div>
+          <div class="lab mono">UTILISATION BY BARANGAY</div>
+          <table>
+            <tr><th>BARANGAY</th><th>APPROVED</th><th>UTILISED</th><th>BALANCE</th><th>PROGRESS</th></tr>
+            <tr><td><div class="t">Barangay 1 (Apagan)</div></td><td class="num">140,000</td><td class="num">118,500</td><td class="num">21,500</td><td style="width:150px"><div class="bar"><i style="width:85%"></i></div><div class="s mono">85%</div></td></tr>
+            <tr><td><div class="t">Camagong</div></td><td class="num">120,000</td><td class="num">74,000</td><td class="num">46,000</td><td><div class="bar"><i style="width:62%"></i></div><div class="s mono">62%</div></td></tr>
+            <tr><td><div class="t">Talisay</div></td><td class="num">135,000</td><td class="num">130,200</td><td class="num">4,800</td><td><div class="bar"><i class="green" style="width:96%"></i></div><div class="s mono">96%</div></td></tr>
+            <tr><td><div class="t">Culit</div></td><td class="num">98,000</td><td class="num">31,000</td><td class="num">67,000</td><td><div class="bar"><i class="amber" style="width:32%"></i></div><div class="s mono">32%</div></td></tr>
+            <tr><td><div class="t">Triangulo</div></td><td class="num">155,000</td><td class="num">102,400</td><td class="num">52,600</td><td><div class="bar"><i style="width:66%"></i></div><div class="s mono">66%</div></td></tr>
+          </table>
+        </div>
+        <div class="panel">
+          <h4>BPR-2026-002</h4>
+          <div class="pid mono">Barangay 1 (Apagan) · Supplemental</div>
+          <div class="kv"><span>Proposed</span><b>₱95,000</b></div>
+          <div class="kv"><span>Remaining allocation</span><b>₱415,000</b></div>
+          <div class="kv"><span>If approved</span><b>₱320,000</b></div>
+          <div class="sep"></div>
+          <div class="lab mono">ATTACHED DOCUMENTS</div>
+          <div class="file"><span>▤</span>Proposal letter.pdf<span class="x mono">214 KB</span></div>
+          <div class="file"><span>▤</span>Itemised breakdown.xlsx<span class="x mono">38 KB</span></div>
+          <div class="file"><span>▤</span>Council resolution.pdf<span class="x mono">96 KB</span></div>
+          <div class="sep"></div>
+          <div class="lab mono">REMARKS</div>
+          <div class="noteBox" style="color:var(--gray)">Required when a proposal is returned.</div>
+          <button class="btn full">Approve proposal</button>
+          <button class="btn red full">Return for revision</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCREEN 3 : SK BARANGAY — PROGRAMS WITH COMPLETION STATUS ============ -->
+<section class="screen" id="s3">
+  <aside class="side">
+    <div class="brand">
+      <svg class="sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.4" fill="#F5B60D"/><g stroke="#F5B60D" stroke-width="1.7" stroke-linecap="round"><path d="M12 2.2v2.4M12 19.4v2.4M2.2 12h2.4M19.4 12h2.4M5.1 5.1l1.7 1.7M17.2 17.2l1.7 1.7M18.9 5.1l-1.7 1.7M6.8 17.2l-1.7 1.7"/></g></svg>
+      <div><h1>SK Federation</h1><p>Monitoring &amp; Evaluation System</p></div>
+    </div>
+    <nav class="nav">
+      <a href="#"><span class="ic">▣</span>Dashboard</a>
+      <a href="#"><span class="ic">◎</span>Youth Profiling</a>
+      <a class="on" href="#"><span class="ic">◈</span>Programs</a>
+      <a href="#"><span class="ic">▤</span>Calendar</a>
+      <a href="#"><span class="ic">▢</span>QR Attendance</a>
+      <a href="#"><span class="ic">◉</span>Participation</a>
+      <a href="#"><span class="ic">▤</span>Documents</a>
+      <a href="#"><span class="ic">◇</span>KK Member Content</a>
+      <a href="#"><span class="ic">▦</span>Inventory</a>
+      <a href="#"><span class="ic">₱</span>Budget</a>
+      <a href="#"><span class="ic">◯</span>Notifications<span class="dot"></span></a>
+      <a href="#"><span class="ic">▥</span>Reports</a>
+      <a href="#"><span class="ic">✓</span>Verify Members</a>
+    </nav>
+  </aside>
+  <div class="main">
+    <div class="top"><span class="crumb mono">PROGRAMS</span><a class="out" href="#">Sign out</a></div>
+    <div class="body">
+      <div class="head">
+        <div>
+          <h2>Programs &amp; Activities</h2>
+          <div class="sub mono">CBYDP 2026-2028 · ABYIP 2026 alignment</div>
+        </div>
+        <button class="btn">+ New Program</button>
+      </div>
+
+      <div class="split">
+        <div>
+          <table>
+            <tr><th>PROGRAM NAME</th><th>CENTRE</th><th>SCHEDULE</th><th>BUDGET</th><th>BUDGET STATUS</th></tr>
+            <tr>
+              <td><div class="t">Health &amp; Wellness Campaign</div><div class="s mono">PRG-001</div></td>
+              <td>Health</td><td class="s">Jul 5, 2026</td><td class="num">45,000</td>
+              <td><span class="pill amber mono">INCOMPLETE</span><div class="s">₱6,800 left</div></td>
+            </tr>
+            <tr>
+              <td><div class="t">Digital Literacy Workshop</div><div class="s mono">PRG-002</div></td>
+              <td>Education</td><td class="s">Jul 12, 2026</td><td class="num">30,000</td>
+              <td><span class="pill green mono">COMPLETE</span><div class="s">Fully utilised</div></td>
+            </tr>
+            <tr>
+              <td><div class="t">Livelihood Training — Ube Processing</div><div class="s mono">PRG-003</div></td>
+              <td>Economic Empowerment</td><td class="s">Jun 28, 2026</td><td class="num">60,000</td>
+              <td><span class="pill amber mono">INCOMPLETE</span><div class="s">₱4,700 left</div></td>
+            </tr>
+            <tr>
+              <td><div class="t">Environmental Clean-up Drive</div><div class="s mono">PRG-004</div></td>
+              <td>Environment</td><td class="s">Jul 8, 2026</td><td class="num">15,000</td>
+              <td><span class="pill green mono">COMPLETE</span><div class="s">No balance</div></td>
+            </tr>
+            <tr>
+              <td><div class="t">Sports Fest 2026</div><div class="s mono">PRG-005</div></td>
+              <td>Sports &amp; Recreation</td><td class="s">Jul 20-22, 2026</td><td class="num">90,000</td>
+              <td><span class="pill gray mono">ONGOING</span><div class="s">₱47,000 left</div></td>
+            </tr>
+          </table>
+        </div>
+        <div class="panel">
+          <span class="pill green mono">COMPLETED</span>
+          <h4 style="margin-top:10px">Health &amp; Wellness Campaign</h4>
+          <div class="pid mono">PRG-001 · Barangay 1 (Apagan)</div>
+          <div class="lab mono">PLAN ALIGNMENT</div>
+          <div style="margin-bottom:12px"><span class="pill gray mono">2026-2028</span> <span class="pill blue mono">ABYIP 2026</span> <span class="pill gray mono">HEALTH</span></div>
+          <div class="lab mono">BUDGET</div>
+          <div class="kv"><span>Allocated</span><b>₱45,000</b></div>
+          <div class="kv"><span>Utilised</span><b>₱38,200</b></div>
+          <div class="kv"><span>Balance</span><b>₱6,800</b></div>
+          <div class="bar"><i class="amber" style="width:85%"></i></div>
+          <div class="s mono" style="font-size:10.5px;color:var(--gray);margin-top:6px">85% utilised</div>
+          <div class="sep"></div>
+          <div class="lab mono">BUDGET COMPLETION</div>
+          <span class="pill amber mono">INCOMPLETE</span>
+          <div class="lab mono" style="margin-top:13px">NOTE ON REMAINING AMOUNT</div>
+          <div class="noteBox">₱6,800 held for medical supplies ordered Sep 30, not yet delivered.</div>
+          <div class="sep"></div>
+          <div class="lab mono">TARGET DEMOGRAPHIC</div>
+          <div style="display:flex;gap:10px"><div class="stat" style="flex:1;padding:9px 11px"><div class="v sm">60</div><div class="l">Target</div></div><div class="stat" style="flex:1;padding:9px 11px"><div class="v sm">54</div><div class="l">Reached</div></div></div>
+          <div class="bar" style="margin-top:8px"><i class="green" style="width:90%"></i></div>
+          <div class="s mono" style="font-size:10.5px;color:var(--gray);margin-top:6px">90% of target reached</div>
+          <button class="btn full">View Full Report</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCREEN 4 : KK MEMBER — MY EVALUATION RESULTS ============ -->
+<section class="screen" id="s4">
+  <aside class="side">
+    <div class="brand">
+      <svg class="sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.4" fill="#F5B60D"/><g stroke="#F5B60D" stroke-width="1.7" stroke-linecap="round"><path d="M12 2.2v2.4M12 19.4v2.4M2.2 12h2.4M19.4 12h2.4M5.1 5.1l1.7 1.7M17.2 17.2l1.7 1.7M18.9 5.1l-1.7 1.7M6.8 17.2l-1.7 1.7"/></g></svg>
+      <div><h1>SK Federation</h1><p>Monitoring &amp; Evaluation System</p></div>
+    </div>
+    <nav class="nav">
+      <a href="#"><span class="ic">▣</span>Homepage</a>
+      <a href="#"><span class="ic">▤</span>Calendar</a>
+      <a href="#"><span class="ic">▢</span>Scan QR Code</a>
+      <a href="#"><span class="ic">◉</span>My Attendance</a>
+      <a class="on" href="#"><span class="ic">★</span>My Evaluations</a>
+      <a href="#"><span class="ic">✓</span>My Certificates</a>
+      <a href="#"><span class="ic">▦</span>Request Equipment</a>
+      <a href="#"><span class="ic">▥</span>Reports &amp; Documents</a>
+      <a href="#"><span class="ic">◯</span>Notifications<span class="dot"></span></a>
+      <a href="#"><span class="ic">◇</span>Announcements</a>
+      <a href="#"><span class="ic">✎</span>Feedback</a>
+    </nav>
+  </aside>
+  <div class="main">
+    <div class="top"><span class="crumb mono">MY EVALUATIONS</span><a class="out" href="#">Sign out</a></div>
+    <div class="body">
+      <div class="head">
+        <div>
+          <h2>My Evaluation Results</h2>
+          <div class="sub mono">Maria Santos · KK-2026-00847 · Barangay 1 (Apagan)</div>
+        </div>
+        <span class="pill blue mono">4 EVALUATIONS SUBMITTED</span>
+      </div>
+
+      <div class="note"><span class="b"></span><span>These are the evaluations you submitted after attending an activity. You can review your own answers and ratings here. Responses are stored with your name unless the form was answered anonymously.</span></div>
+
+      <div class="stats">
+        <div class="stat"><div class="l">Activities Attended</div><div class="v">6</div></div>
+        <div class="stat"><div class="l">Evaluations Submitted</div><div class="v">4</div></div>
+        <div class="stat"><div class="l">Pending Evaluation</div><div class="v">2</div></div>
+        <div class="stat"><div class="l">My Average Rating Given</div><div class="v">4.5</div></div>
+      </div>
+
+      <div class="tabs"><span class="on">Submitted</span><span>Pending</span></div>
+
+      <div class="row g">
+        <div>
+          <div class="id mono">EVL-2026-0412 <span class="pill green mono" style="margin-left:6px">SUBMITTED</span></div>
+          <h3>Health &amp; Wellness Campaign</h3>
+          <div class="m">Attended Jul 5, 2026 · Evaluation submitted Jul 5, 2026 · E-certificate issued<br>
+          Your overall rating: <span class="stars">★★★★★</span> 5.0</div>
+        </div>
+        <div class="rt"><div class="date mono">Jul 5, 2026</div><button class="btn ghost">Review answers</button></div>
+      </div>
+
+      <div class="row g">
+        <div>
+          <div class="id mono">EVL-2026-0388 <span class="pill green mono" style="margin-left:6px">SUBMITTED</span></div>
+          <h3>Digital Literacy Workshop</h3>
+          <div class="m">Attended Jul 12, 2026 · Evaluation submitted Jul 12, 2026 · E-certificate issued<br>
+          Your overall rating: <span class="stars">★★★★☆</span> 4.0</div>
+        </div>
+        <div class="rt"><div class="date mono">Jul 12, 2026</div><button class="btn ghost">Review answers</button></div>
+      </div>
+
+      <div class="row">
+        <div>
+          <div class="id mono">EVL-2026-0350 <span class="pill amber mono" style="margin-left:6px">NOT YET ANSWERED</span></div>
+          <h3>Environmental Clean-up Drive</h3>
+          <div class="m">Attended Jul 8, 2026 · Evaluation form still open<br>
+          The e-certificate is released once the evaluation is submitted.</div>
+        </div>
+        <div class="rt"><div class="date mono">Attended Jul 8, 2026</div><button class="btn">Answer now</button></div>
+      </div>
+
+      <div class="split" style="margin-top:20px">
+        <div>
+          <div class="lab mono">MY ANSWERS — HEALTH &amp; WELLNESS CAMPAIGN</div>
+          <div class="panel">
+            <div class="q">1. The activity was well organised and started on time.</div>
+            <div class="stars">★★★★★ <span class="mono" style="color:var(--gray);font-size:11px">5 — Strongly agree</span></div>
+            <div class="sep"></div>
+            <div class="q">2. The topic was relevant to the needs of the youth.</div>
+            <div class="stars">★★★★★ <span class="mono" style="color:var(--gray);font-size:11px">5 — Strongly agree</span></div>
+            <div class="sep"></div>
+            <div class="q">3. The facilitators explained the content clearly.</div>
+            <div class="stars">★★★★☆ <span class="mono" style="color:var(--gray);font-size:11px">4 — Agree</span></div>
+            <div class="sep"></div>
+            <div class="q">4. I would join a similar activity again.</div>
+            <div class="stars">★★★★★ <span class="mono" style="color:var(--gray);font-size:11px">5 — Strongly agree</span></div>
+            <div class="sep"></div>
+            <div class="q">5. Comments and suggestions</div>
+            <div class="noteBox">The free check-up was very helpful. I hope the next one includes dental services and is held on a weekend.</div>
+          </div>
+        </div>
+        <div class="panel">
+          <h4>Health &amp; Wellness Campaign</h4>
+          <div class="pid mono">EVL-2026-0412 · PRG-001</div>
+          <div class="kv"><span>Attended</span><b>Jul 5, 2026</b></div>
+          <div class="kv"><span>Submitted</span><b>Jul 5, 2026</b></div>
+          <div class="kv"><span>My average</span><b>4.8</b></div>
+          <div class="sep"></div>
+          <div class="lab mono">MY OVERALL RATING</div>
+          <div class="stars" style="font-size:19px">★★★★★</div>
+          <div class="bar" style="margin-top:8px"><i class="green" style="width:96%"></i></div>
+          <div class="s mono" style="font-size:10.5px;color:var(--gray);margin-top:6px">4.8 of 5.0</div>
+          <div class="sep"></div>
+          <div class="lab mono">E-CERTIFICATE</div>
+          <span class="pill green mono">ISSUED</span>
+          <div class="noteBox" style="margin-top:9px">CERT-2026-00847-001<br>Issued Jul 5, 2026 upon submission of this evaluation.</div>
+          <button class="btn full">View e-certificate</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCREEN 5 : SK BARANGAY — BUDGET REPORT (MONTHLY / ANNUAL) ============ -->
+<section class="screen" id="s5">
+  <aside class="side">
+    <div class="brand">
+      <svg class="sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.4" fill="#F5B60D"/><g stroke="#F5B60D" stroke-width="1.7" stroke-linecap="round"><path d="M12 2.2v2.4M12 19.4v2.4M2.2 12h2.4M19.4 12h2.4M5.1 5.1l1.7 1.7M17.2 17.2l1.7 1.7M18.9 5.1l-1.7 1.7M6.8 17.2l-1.7 1.7"/></g></svg>
+      <div><h1>SK Federation</h1><p>Monitoring &amp; Evaluation System</p></div>
+    </div>
+    <nav class="nav">
+      <a href="#"><span class="ic">▣</span>Dashboard</a>
+      <a href="#"><span class="ic">◎</span>Youth Profiling</a>
+      <a href="#"><span class="ic">◈</span>Programs</a>
+      <a href="#"><span class="ic">▤</span>Calendar</a>
+      <a href="#"><span class="ic">▢</span>QR Attendance</a>
+      <a href="#"><span class="ic">◉</span>Participation</a>
+      <a href="#"><span class="ic">▤</span>Documents</a>
+      <a href="#"><span class="ic">◇</span>KK Member Content</a>
+      <a href="#"><span class="ic">▦</span>Inventory</a>
+      <a class="on" href="#"><span class="ic">₱</span>Budget</a>
+      <a href="#"><span class="ic">◯</span>Notifications<span class="dot"></span></a>
+      <a href="#"><span class="ic">▥</span>Reports</a>
+      <a href="#"><span class="ic">✓</span>Verify Members</a>
+    </nav>
+  </aside>
+  <div class="main">
+    <div class="top"><span class="crumb mono">BUDGET › REPORTS</span><a class="out" href="#">Sign out</a></div>
+    <div class="body">
+      <div class="head">
+        <div>
+          <h2>Budget Report</h2>
+          <div class="sub mono">Barangay 1 (Apagan) · Statement of budget against actual spending</div>
+        </div>
+        <div style="display:flex;gap:7px;align-items:center">
+          <button class="btn ghost">Export PDF</button>
+          <button class="btn">Generate report</button>
+        </div>
+      </div>
+
+      <div class="note"><span class="b"></span><span>The annual report compares the approved budget against the actual spending for the whole year. The Sangguniang Kabataan is required to submit and publish this comparison.</span></div>
+
+      <div class="tabs"><span>Monthly</span><span class="on">Annual</span><span>Per Program</span></div>
+
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+        <span class="lab mono" style="margin:0">PERIOD</span>
+        <span class="pill blue mono">CY 2026</span>
+        <span class="pill gray mono">JAN - DEC</span>
+        <span class="lab mono" style="margin:0 0 0 12px">GENERATED</span>
+        <span class="mono" style="font-size:11px;color:var(--gray)">Oct 28, 2026 · 9:14 PM</span>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="l">Approved Budget</div><div class="v">₱235,000</div></div>
+        <div class="stat"><div class="l">Actual Spending</div><div class="v">₱181,500</div></div>
+        <div class="stat"><div class="l">Unutilised</div><div class="v">₱53,500</div></div>
+        <div class="stat"><div class="l">Utilisation Rate</div><div class="v">77.2<span style="font-size:15px;font-weight:400">%</span></div></div>
+      </div>
+
+      <div class="split">
+        <div>
+          <div class="lab mono">MONTHLY BREAKDOWN — CY 2026</div>
+          <table>
+            <tr><th>MONTH</th><th>BUDGET</th><th>ACTUAL</th><th>VARIANCE</th><th>UTILISATION</th></tr>
+            <tr><td><div class="t">January</div></td><td class="num">18,000</td><td class="num">12,400</td><td class="num">5,600</td><td style="width:140px"><div class="bar"><i class="amber" style="width:69%"></i></div><div class="s mono">69%</div></td></tr>
+            <tr><td><div class="t">February</div></td><td class="num">18,000</td><td class="num">17,100</td><td class="num">900</td><td><div class="bar"><i class="green" style="width:95%"></i></div><div class="s mono">95%</div></td></tr>
+            <tr><td><div class="t">March</div></td><td class="num">20,000</td><td class="num">19,800</td><td class="num">200</td><td><div class="bar"><i class="green" style="width:99%"></i></div><div class="s mono">99%</div></td></tr>
+            <tr><td><div class="t">April</div></td><td class="num">15,000</td><td class="num">8,250</td><td class="num">6,750</td><td><div class="bar"><i class="amber" style="width:55%"></i></div><div class="s mono">55%</div></td></tr>
+            <tr><td><div class="t">May</div></td><td class="num">22,000</td><td class="num">21,300</td><td class="num">700</td><td><div class="bar"><i class="green" style="width:97%"></i></div><div class="s mono">97%</div></td></tr>
+            <tr><td><div class="t">June</div></td><td class="num">30,000</td><td class="num">27,650</td><td class="num">2,350</td><td><div class="bar"><i style="width:92%"></i></div><div class="s mono">92%</div></td></tr>
+            <tr><td><div class="t">July</div></td><td class="num">52,000</td><td class="num">48,100</td><td class="num">3,900</td><td><div class="bar"><i style="width:93%"></i></div><div class="s mono">93%</div></td></tr>
+            <tr><td><div class="t">August</div></td><td class="num">14,000</td><td class="num">11,200</td><td class="num">2,800</td><td><div class="bar"><i class="amber" style="width:80%"></i></div><div class="s mono">80%</div></td></tr>
+            <tr><td><div class="t">September</div></td><td class="num">16,000</td><td class="num">9,700</td><td class="num">6,300</td><td><div class="bar"><i class="amber" style="width:61%"></i></div><div class="s mono">61%</div></td></tr>
+            <tr><td><div class="t">October</div></td><td class="num">30,000</td><td class="num">6,000</td><td class="num">24,000</td><td><div class="bar"><i class="amber" style="width:20%"></i></div><div class="s mono">20%</div></td></tr>
+            <tr style="background:#FAFBFD"><td><div class="t">TOTAL</div><div class="s mono">Jan - Oct 2026</div></td><td class="num"><b>235,000</b></td><td class="num"><b>181,500</b></td><td class="num"><b>53,500</b></td><td><div class="bar"><i style="width:77%"></i></div><div class="s mono">77.2%</div></td></tr>
+          </table>
+        </div>
+        <div class="panel">
+          <h4>Report Settings</h4>
+          <div class="pid mono">Barangay 1 (Apagan)</div>
+          <div class="lab mono">REPORT TYPE</div>
+          <div style="margin-bottom:12px"><span class="pill gray mono">MONTHLY</span> <span class="pill blue mono">ANNUAL</span></div>
+          <div class="lab mono">COVERAGE</div>
+          <div class="kv"><span>Period</span><b>CY 2026</b></div>
+          <div class="kv"><span>Programs covered</span><b>5</b></div>
+          <div class="kv"><span>Expense entries</span><b>47</b></div>
+          <div class="sep"></div>
+          <div class="lab mono">SUMMARY</div>
+          <div class="kv"><span>Highest utilisation</span><b>Mar — 99%</b></div>
+          <div class="kv"><span>Lowest utilisation</span><b>Oct — 20%</b></div>
+          <div class="kv"><span>Programs complete</span><b>2 of 5</b></div>
+          <div class="sep"></div>
+          <div class="lab mono">NOTE ON UNUTILISED AMOUNT</div>
+          <div class="noteBox">₱53,500 remains unutilised. ₱47,000 is committed to Sports Fest 2026, which is still in progress. ₱6,500 is held for deliveries not yet received.</div>
+          <div class="sep"></div>
+          <div class="lab mono">SUBMISSION</div>
+          <span class="pill amber mono">NOT YET SUBMITTED</span>
+          <button class="btn full">Submit to SK Federation</button>
+          <button class="btn ghost full">Export as PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+var btns=document.querySelectorAll('#switch button');
+btns.forEach(function(b){
+  b.addEventListener('click',function(){
+    btns.forEach(function(x){x.classList.remove('on')});
+    b.classList.add('on');
+    document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('on')});
+    document.getElementById(b.dataset.s).classList.add('on');
+    window.scrollTo(0,0);
+  });
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='h'||e.key==='H'){
+    var s=document.getElementById('switch');
+    s.style.display = s.style.display==='none' ? 'flex' : 'none';
+  }
+});
+</script>
+</body>
+</html>
